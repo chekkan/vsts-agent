@@ -24,6 +24,8 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
 
         void UpdateJobRunProperties(IExecutionContext executionContext, TrackingConfig config, string file);
 
+        void DiscoveryExpiredGarbage(IExecutionContext executionContext, TimeSpan expiration);
+
         void DisposeCollectedGarbage(IExecutionContext executionContext);
     }
 
@@ -140,6 +142,64 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
             // Update the info properties and save the file.
             config.UpdateJobRunProperties(executionContext);
             WriteToFile(file, config);
+        }
+
+        public void DiscoveryExpiredGarbage(IExecutionContext executionContext, TimeSpan expiration)
+        {
+            Trace.Entering();
+            Trace.Info("Scan all SourceFolder tracking files.");
+            string searchRoot = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Work), Constants.Build.Path.SourceRootMappingDirectory);
+            var allTrackingFiles = Directory.EnumerateFiles(searchRoot, Constants.Build.Path.TrackingConfigFile, SearchOption.AllDirectories);
+            Trace.Verbose($"Find {allTrackingFiles.Count()} tracking files.");
+
+            // scan all sourcefolder tracking file, find which folder has never been used since UTC-expiration
+            // the scan and garbage discovery should be best effort.
+            // if the tracking file is in old format, just delete the folder since the first time the folder been use we will convert the tracking file to new format.
+            foreach (var trackingFile in allTrackingFiles)
+            {
+                try
+                {
+                    executionContext.Output($"Evaluate BuildDirectory tracking file: {trackingFile}");
+                    TrackingConfigBase tracking = LoadIfExists(executionContext, trackingFile);
+
+                    // detect whether the tracking file is in new format.
+                    TrackingConfig newTracking = tracking as TrackingConfig;
+                    if (newTracking == null)
+                    {
+                        LegacyTrackingConfig legacyConfig = tracking as LegacyTrackingConfig;
+                        ArgUtil.NotNull(legacyConfig, nameof(LegacyTrackingConfig));
+
+                        Trace.Verbose($"{trackingFile} is a old format tracking file.");
+
+                        executionContext.Output($"Mark tracking file '{trackingFile}' for GC, since it never been used.");
+                        MarkForGarbageCollection(executionContext, legacyConfig);
+                        IOUtil.DeleteFile(trackingFile);
+                    }
+                    else
+                    {
+                        Trace.Verbose($"{trackingFile} is a new format tracking file.");
+                        ArgUtil.NotNull(newTracking.LastRunOn, nameof(newTracking.LastRunOn));
+
+                        if (DateTime.UtcNow - expiration > newTracking.LastRunOn)
+                        {
+                            executionContext.Debug($"Current UTC: {DateTime.UtcNow.ToString("o")}");
+                            executionContext.Debug($"Expiration limit: {expiration.TotalDays} days.");
+                            executionContext.Debug($"Last time been used at: {newTracking.LastRunOnString}");
+                            executionContext.Output($"Mark tracking file '{trackingFile}' for GC, since it hasn't been used for a well.");
+                            MarkForGarbageCollection(executionContext, newTracking);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    executionContext.Error($"Unable discovery garbage based on '{trackingFile}'. Try it next time.");
+                    executionContext.Error(ex);
+                }
+            }
         }
 
         public void DisposeCollectedGarbage(IExecutionContext executionContext)

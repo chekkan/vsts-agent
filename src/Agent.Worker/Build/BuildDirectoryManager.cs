@@ -131,6 +131,11 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
             Trace.Entering();
             ArgUtil.NotNull(executionContext, nameof(executionContext));
             var trackingManager = HostContext.GetService<ITrackingManager>();
+
+            // scan unused build directories
+            trackingManager.DiscoveryExpiredGarbage(executionContext, TimeSpan.FromDays(30));
+
+            // delete unused build directories
             trackingManager.DisposeCollectedGarbage(executionContext);
         }
 
