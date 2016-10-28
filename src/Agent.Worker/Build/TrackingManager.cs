@@ -187,6 +187,7 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
                             executionContext.Debug($"Last time been used at: {newTracking.LastRunOnString}");
                             executionContext.Output($"Mark tracking file '{trackingFile}' for GC, since it hasn't been used for a well.");
                             MarkForGarbageCollection(executionContext, newTracking);
+                            IOUtil.DeleteFile(trackingFile);
                         }
                         else
                         {
