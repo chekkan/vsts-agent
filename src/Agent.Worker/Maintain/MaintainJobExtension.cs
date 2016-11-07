@@ -1,14 +1,15 @@
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Agent.Util;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Microsoft.VisualStudio.Services.Agent.Worker.Maintain
 {
+    public interface IMaintainServiceProvider : IExtension
+    {
+        string Description { get; }
+        Task RunMaintainServiceAsync(IExecutionContext context);
+    }
+
     public sealed class MaintainJobExtension : AgentService, IJobExtension
     {
         public Type ExtensionType => typeof(IJobExtension);
@@ -18,33 +19,56 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Maintain
 
         public MaintainJobExtension()
         {
-            // PrepareStep = new JobExtensionRunner(
-            //     runAsync: PrepareAsync,
-            //     alwaysRun: false,
-            //     continueOnError: false,
-            //     critical: true,
-            //     displayName: StringUtil.Loc("GetSources"),
-            //     enabled: true,
-            //     @finally: false);
-
-            // FinallyStep = new JobExtensionRunner(
-            //     runAsync: FinallyAsync,
-            //     alwaysRun: false,
-            //     continueOnError: false,
-            //     critical: false,
-            //     displayName: StringUtil.Loc("Cleanup"),
-            //     enabled: true,
-            //     @finally: true);
+            PrepareStep = new JobExtensionRunner(
+                runAsync: MaintainAsync,
+                alwaysRun: false,
+                continueOnError: false,
+                critical: true,
+                displayName: "Maintain Job",
+                enabled: true,
+                @finally: false);
         }
 
         public string GetRootedPath(IExecutionContext context, string path)
         {
-            throw new NotImplementedException();
+            return path;
         }
 
         public void ConvertLocalPath(IExecutionContext context, string localPath, out string repoName, out string sourcePath)
         {
-            throw new NotImplementedException();
+            sourcePath = localPath;
+            repoName = string.Empty;
+        }
+
+        private async Task MaintainAsync()
+        {
+            // Validate args.
+            Trace.Entering();
+            ArgUtil.NotNull(PrepareStep, nameof(PrepareStep));
+            ArgUtil.NotNull(PrepareStep.ExecutionContext, nameof(PrepareStep.ExecutionContext));
+            IExecutionContext executionContext = PrepareStep.ExecutionContext;
+
+            var extensionManager = HostContext.GetService<IExtensionManager>();
+            var maintainServiceProviders = extensionManager.GetExtensions<IMaintainServiceProvider>();
+
+            if (maintainServiceProviders != null && maintainServiceProviders.Count > 0)
+            {
+                foreach (var maintainProvider in maintainServiceProviders)
+                {
+                    // all maintain operations should be best effort.
+                    executionContext.Section($"Start maintain service: {maintainProvider.Description}");
+                    try
+                    {
+                        await maintainProvider.RunMaintainServiceAsync(executionContext);
+                    }
+                    catch (Exception ex)
+                    {
+                        executionContext.Error(ex);
+                    }
+
+                    executionContext.Section($"Finish maintain service: {maintainProvider.Description}");
+                }
+            }
         }
     }
 }

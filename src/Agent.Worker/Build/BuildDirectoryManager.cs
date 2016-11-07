@@ -3,6 +3,8 @@ using Microsoft.VisualStudio.Services.Agent.Util;
 using System;
 using System.IO;
 using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.VisualStudio.Services.Agent.Worker.Maintain;
+using System.Threading.Tasks;
 
 namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
 {
@@ -22,8 +24,11 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
         void CleanupDirectory(IExecutionContext executionContext);
     }
 
-    public sealed class BuildDirectoryManager : AgentService, IBuildDirectoryManager
+    public sealed class BuildDirectoryManager : AgentService, IBuildDirectoryManager, IMaintainServiceProvider
     {
+        public string Description => "Delete unused build directories.";
+        public Type ExtensionType => typeof(IMaintainServiceProvider);
+
         public TrackingConfig PrepareDirectory(
             IExecutionContext executionContext,
             ServiceEndpoint endpoint,
@@ -259,6 +264,16 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
             }
 
             return BuildCleanOption.None;
+        }
+
+        Task IMaintainServiceProvider.RunMaintainServiceAsync(IExecutionContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IAgentService.Initialize(IHostContext context)
+        {
+            throw new NotImplementedException();
         }
     }
 
