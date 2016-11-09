@@ -1,6 +1,8 @@
 using Microsoft.VisualStudio.Services.Agent.Util;
 using System;
 using System.Threading.Tasks;
+using System.IO;
+using System.Threading;
 
 namespace Microsoft.VisualStudio.Services.Agent.Worker.Maintain
 {
@@ -80,16 +82,60 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Maintain
             }
         }
 
-        private Task FinallyAsync()
-        { 
+        private async Task FinallyAsync()
+        {
             // Validate args.
             Trace.Entering();
             ArgUtil.NotNull(FinallyStep, nameof(FinallyStep));
             ArgUtil.NotNull(FinallyStep.ExecutionContext, nameof(FinallyStep.ExecutionContext));
             IExecutionContext executionContext = FinallyStep.ExecutionContext;
 
-             
-            return Task.CompletedTask;
+            string workDirectory = HostContext.GetDirectory(WellKnownDirectory.Work);
+            string pathRoot = Path.GetPathRoot(workDirectory);
+
+            DriveInfo driveInfo = new DriveInfo(pathRoot);
+            executionContext.Output($"AvailableFreeSpace: {driveInfo.AvailableFreeSpace}");
+
+            long workDirectorySize = await CalculateDirectorySize(executionContext, workDirectory);
+            executionContext.Output($"'{workDirectory}': {workDirectorySize}");
         }
+
+        private async Task<long> CalculateDirectorySize(IExecutionContext context, string directoryPath)
+        {
+            long directorySize = 0;
+            fileProcessCounter = 0;
+            DirectoryInfo workDirectoryInfo = new DirectoryInfo(directoryPath);
+            CancellationTokenSource progressReportCancellationToken = new CancellationTokenSource();
+            Task progressReportTask = FileScanReport(context, progressReportCancellationToken.Token);
+
+            foreach (var fileInfo in workDirectoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
+            {
+                Interlocked.Increment(ref fileProcessCounter);
+                directorySize += fileInfo.Length;
+            }
+
+            progressReportCancellationToken.Cancel();
+            await progressReportTask;
+
+            return directorySize;
+        }
+
+        private async Task FileScanReport(IExecutionContext context, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                context.Output($"Scaned {fileProcessCounter}");
+                try
+                {
+                    await Task.Delay(1000, token);
+                }
+                catch (OperationCanceledException ex)
+                {
+                    Trace.Error(ex);
+                }
+            }
+        }
+
+        private int fileProcessCounter = 0;
     }
 }
