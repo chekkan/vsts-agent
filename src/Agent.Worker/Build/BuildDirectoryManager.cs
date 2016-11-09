@@ -131,7 +131,7 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
             return newConfig;
         }
 
-        public void CleanupDirectory(IExecutionContext executionContext)
+        public Task MaintainAsync(IExecutionContext executionContext)
         {
             Trace.Entering();
             ArgUtil.NotNull(executionContext, nameof(executionContext));
@@ -142,6 +142,8 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
 
             // delete unused build directories
             trackingManager.DisposeCollectedGarbage(executionContext);
+
+            return Task.CompletedTask;
         }
 
         private TrackingConfig ConvertToNewFormat(
@@ -264,16 +266,6 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
             }
 
             return BuildCleanOption.None;
-        }
-
-        Task IMaintainServiceProvider.RunMaintainServiceAsync(IExecutionContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IAgentService.Initialize(IHostContext context)
-        {
-            throw new NotImplementedException();
         }
     }
 
