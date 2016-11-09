@@ -106,8 +106,8 @@ namespace Microsoft.VisualStudio.Services.Agent
                     Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.CodeCoverage.JaCoCoSummaryReader, Agent.Worker");
                     Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.CodeCoverage.CoberturaSummaryReader, Agent.Worker");
                     break;
-                // Worker maintain service provider extensions.
-                case "Microsoft.VisualStudio.Services.Agent.Worker.Maintain.IMaintainServiceProvider":
+                // Worker maintenance service provider extensions.
+                case "Microsoft.VisualStudio.Services.Agent.Worker.Maintain.IMaintenanceServiceProvider":
                     Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.Build.BuildDirectoryManager, Agent.Worker");
                     break;
                 default:

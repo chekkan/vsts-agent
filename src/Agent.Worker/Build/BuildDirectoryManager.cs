@@ -20,14 +20,12 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
             IExecutionContext executionContext,
             string description, string path,
             bool deleteExisting);
-
-        void CleanupDirectory(IExecutionContext executionContext);
     }
 
-    public sealed class BuildDirectoryManager : AgentService, IBuildDirectoryManager, IMaintainServiceProvider
+    public sealed class BuildDirectoryManager : AgentService, IBuildDirectoryManager, IMaintenanceServiceProvider
     {
         public string Description => "Delete unused build directories.";
-        public Type ExtensionType => typeof(IMaintainServiceProvider);
+        public Type ExtensionType => typeof(IMaintenanceServiceProvider);
 
         public TrackingConfig PrepareDirectory(
             IExecutionContext executionContext,
