@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
 
-namespace Microsoft.VisualStudio.Services.Agent.Worker.Maintain
+namespace Microsoft.VisualStudio.Services.Agent.Worker.Maintenance
 {
     public interface IMaintenanceServiceProvider : IExtension
     {

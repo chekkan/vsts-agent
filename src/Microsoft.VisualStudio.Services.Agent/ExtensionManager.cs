@@ -58,7 +58,7 @@ namespace Microsoft.VisualStudio.Services.Agent
                     Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.Build.BuildJobExtension, Agent.Worker");
                     Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.Release.ReleaseJobExtension, Agent.Worker");
                     Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.Release.DeploymentJobExtension, Agent.Worker");
-                    Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.Maintain.MaintainJobExtension, Agent.Worker");
+                    Add<T>(extensions, "Microsoft.VisualStudio.Services.Agent.Worker.Maintenance.MaintenanceJobExtension, Agent.Worker");
                     break;
                 // Worker command extensions.
                 case "Microsoft.VisualStudio.Services.Agent.Worker.IWorkerCommandExtension":

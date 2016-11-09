@@ -14,7 +14,7 @@ using Xunit;
 using Microsoft.VisualStudio.Services.Agent.Worker.CodeCoverage;
 using Microsoft.VisualStudio.Services.Agent.Worker.Release.Artifacts.Definition;
 using Microsoft.VisualStudio.Services.Agent.Worker.Release.ContainerFetchEngine;
-using Microsoft.VisualStudio.Services.Agent.Worker.Maintain;
+using Microsoft.VisualStudio.Services.Agent.Worker.Maintenance;
 
 namespace Microsoft.VisualStudio.Services.Agent.Tests
 {

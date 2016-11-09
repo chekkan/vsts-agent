@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Services.Agent.Util;
 using System;
 using System.IO;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Agent.Worker.Maintain;
+using Microsoft.VisualStudio.Services.Agent.Worker.Maintenance;
 using System.Threading.Tasks;
 
 namespace Microsoft.VisualStudio.Services.Agent.Worker.Build
